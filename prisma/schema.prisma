@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id    String @id // ID numérico del proveedor (ej. "9")
+  name  String // nombre legible (ej. "Lucky Streak")
+
+  @@index([name])
+}
+
+model Game {
+  id         String   @id // formato "provider:game-id"
+  name       String
+  type       String
+  providerId String
+  launchUrl  String?
+  demoUrl    String?
+  thumbnail  String?
+  rtp        Float?
+  isLive     Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([providerId])
+  @@index([type])
+}

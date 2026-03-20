@@ -1,0 +1,121 @@
+{
+  "info": {
+    "name": "Casino Games API v2",
+    "description": "API collection for testing OCGames Backend Endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Sync Games",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "super-secret-casino-key-2026",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/games/sync",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "games", "sync"]
+        }
+      }
+    },
+    {
+      "name": "Get Games (Search & Filters)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/games?page=1&limit=20&search=roulette",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "search", "value": "roulette" },
+            { "key": "type", "value": "LIVE", "disabled": true },
+            { "key": "providerId", "value": "lucky-streak", "disabled": true },
+            { "key": "isLive", "value": "true", "disabled": true }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Homepage Games",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/games/home",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "games", "home"]
+        }
+      }
+    },
+    {
+      "name": "Get Unique Categories",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/games/categories",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "games", "categories"]
+        }
+      }
+    },
+    {
+      "name": "Get Unique Providers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/games/providers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "games", "providers"]
+        }
+      }
+    },
+    {
+      "name": "Get Game By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/games/30154",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "games", "30154"]
+        }
+      }
+    }
+  ]
+}
