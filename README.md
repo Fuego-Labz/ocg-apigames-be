@@ -284,7 +284,7 @@ Ejemplo para producción: `POST /api/games/sync?env=production`
 }
 ```
 
-> Este endpoint descarga los juegos de la API del proveedor, los inserta/actualiza en la DB, y marca como inactivos los que ya no existen. El caché se limpia automáticamente.
+> Este endpoint descarga los juegos de la API del proveedor, filtra y guarda **únicamente** los juegos que pertenecen a proveedores ya registrados en la DB (los cargados en el paso de instalación), y marca como inactivos los que ya no existen. El caché se limpia automáticamente.
 
 ---
 

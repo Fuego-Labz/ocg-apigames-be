@@ -22,21 +22,16 @@ export class GameRepository {
   public async upsertGames(games: GameInput[]): Promise<{ added: number, updated: number }> {
     const CHUNK_SIZE = 100;
 
-    // 1. auto-crear proveedores que no existan todavía (pocos, se hace de una)
-    const uniqueProviderIds = [...new Set(games.map(g => String(g.providerId)))];
-    await prisma.$transaction(
-      uniqueProviderIds.map(pid =>
-        prisma.provider.upsert({
-          where: { id: pid },
-          update: {},
-          create: { id: pid, name: `Provider ${pid}` }
-        })
-      )
-    );
+    // 1. obtener los proveedores que existen en la base de datos
+    const knownProviders = await prisma.provider.findMany({ select: { id: true } });
+    const knownProviderIds = new Set(knownProviders.map(p => p.id));
+
+    // filtrar los juegos recibidos para guardar SOLO los que pertenecen a proveedores configurados
+    const validGames = games.filter(g => knownProviderIds.has(String(g.providerId)));
 
     // 2. upsert de juegos en chunks de CHUNK_SIZE
-    for (let i = 0; i < games.length; i += CHUNK_SIZE) {
-      const chunk = games.slice(i, i + CHUNK_SIZE);
+    for (let i = 0; i < validGames.length; i += CHUNK_SIZE) {
+      const chunk = validGames.slice(i, i + CHUNK_SIZE);
       await prisma.$transaction(
         chunk.map(game => {
           const payload = {
@@ -60,14 +55,14 @@ export class GameRepository {
       );
     }
 
-    // 3. marcar como inactivos los juegos que ya no están en la lista del proveedor
-    const activeIds = games.map(g => String(g.id));
+    // 3. marcar como inactivos los juegos que ya no están en la lista filtrada
+    const activeIds = validGames.map(g => String(g.id));
     await prisma.game.updateMany({
       where: { id: { notIn: activeIds } },
       data: { isActive: false }
     });
 
-    return { added: games.length, updated: 0 };
+    return { added: validGames.length, updated: 0 };
   }
 
   /**
