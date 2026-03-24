@@ -8,14 +8,14 @@ export class GameService {
    * sincroniza los juegos desde la API externa hacia la base de datos.
    * al finalizar, limpia todo el caché para que las próximas consultas traigan datos frescos.
    */
-  public async syncGames(): Promise<{ success: boolean; message: string }> {
-    logger.info('Starting game synchronization process...');
+  public async syncGames(environment?: string): Promise<{ success: boolean; message: string }> {
+    logger.info(`Starting game synchronization process (environment: ${environment || 'staging'})...`);
 
     try {
       // obtener datos de forma concurrente
       const [normalGames, liveGames] = await Promise.all([
-        luckyStreakService.getNormalGames(),
-        luckyStreakService.getLiveGames()
+        luckyStreakService.getNormalGames(environment),
+        luckyStreakService.getLiveGames(environment)
       ]);
 
       logger.info(`Fetched ${normalGames.length} normal games and ${liveGames.length} live games from API.`);

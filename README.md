@@ -32,8 +32,8 @@ cp .env.example .env
 # 4. sincronizar el schema con la base de datos
 npx prisma db push
 
-# 5. (opcional) asignar nombres a los proveedores
-npx ts-node prisma/seed.ts
+# 5. cargar los nombres reales de los proveedores predeterminados
+npx prisma db seed
 
 # 6. iniciar en modo desarrollo
 npm run dev
@@ -267,6 +267,14 @@ POST /api/games/sync
 | Header | Valor |
 |--------|-------|
 | `x-api-key` | El valor de `API_KEY` del `.env` |
+
+**Parámetros opcionales (Query o Body):**
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `env` | string | Enviar `production` para conectar a la API real, u omitir para usar staging. |
+
+Ejemplo para producción: `POST /api/games/sync?env=production`
 
 **Respuesta:**
 ```json
