@@ -77,6 +77,20 @@ SYNC_CRON=0 */6 * * *
 
 ---
 
+## Priorización de Juegos (Destacados)
+
+Por defecto, los juegos se ordenan alfabéticamente para garantizar una mezcla visual adecuada entre proveedores sin romper la paginación de la API. Sin embargo, el sistema cuenta con un campo `priority` (por defecto `0`) en la base de datos que permite destacar juegos manualmente.
+
+**Cómo modificar la prioridad (Opción Manual):**
+1. Abre tu terminal en la raíz de este proyecto y ejecuta `npx prisma studio`.
+2. Se abrirá una interfaz web en tu navegador (usualmente en `http://localhost:5555`).
+3. Ingresa al modelo **Game** y usa el buscador para encontrar el juego que deseas destacar.
+4. Cambia el valor de la columna `priority` de `0` a un número mayor (ej. `10`, `50` o `100`). **Los números más altos siempre aparecerán primero.**
+5. Haz clic en el botón verde de "Save" (Guardar cambios).
+
+Los juegos modificados adoptarán sus nuevas posiciones instantáneamente en el frontend. El resto de juegos con prioridad `0` seguirán ordenándose alfabéticamente.
+
+---
 ## Endpoints
 
 Base URL: `http://localhost:3000`
