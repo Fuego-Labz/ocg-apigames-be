@@ -14,7 +14,8 @@ const getGamesSchema = zod_1.z.object({
 class GameController {
     async syncGames(req, res, next) {
         try {
-            const result = await game_service_1.gameService.syncGames();
+            const environment = (req.query.env || req.body.env);
+            const result = await game_service_1.gameService.syncGames(environment);
             res.status(200).json(result);
         }
         catch (error) {

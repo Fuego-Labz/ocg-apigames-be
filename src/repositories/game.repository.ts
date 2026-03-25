@@ -55,10 +55,17 @@ export class GameRepository {
       );
     }
 
-    // 3. marcar como inactivos los juegos que ya no están en la lista filtrada
+    // 3. marcar como inactivos los juegos que ya no están en la lista filtrada,
+    // pero SOLO para los proveedores que vinieron en este lote de sincronización.
+    const syncedProviderIds = [...new Set(games.map(g => String(g.providerId)))];
+    const validSyncedProviderIds = syncedProviderIds.filter(id => knownProviderIds.has(id));
+
     const activeIds = validGames.map(g => String(g.id));
     await prisma.game.updateMany({
-      where: { id: { notIn: activeIds } },
+      where: { 
+        providerId: { in: validSyncedProviderIds },
+        id: { notIn: activeIds } 
+      },
       data: { isActive: false }
     });
 

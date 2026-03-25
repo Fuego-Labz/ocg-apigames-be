@@ -12,16 +12,14 @@ class GameRepository {
      */
     async upsertGames(games) {
         const CHUNK_SIZE = 100;
-        // 1. auto-crear proveedores que no existan todavía (pocos, se hace de una)
-        const uniqueProviderIds = [...new Set(games.map(g => String(g.providerId)))];
-        await prisma_1.default.$transaction(uniqueProviderIds.map(pid => prisma_1.default.provider.upsert({
-            where: { id: pid },
-            update: {},
-            create: { id: pid, name: `Provider ${pid}` }
-        })));
+        // 1. obtener los proveedores que existen en la base de datos
+        const knownProviders = await prisma_1.default.provider.findMany({ select: { id: true } });
+        const knownProviderIds = new Set(knownProviders.map(p => p.id));
+        // filtrar los juegos recibidos para guardar SOLO los que pertenecen a proveedores configurados
+        const validGames = games.filter(g => knownProviderIds.has(String(g.providerId)));
         // 2. upsert de juegos en chunks de CHUNK_SIZE
-        for (let i = 0; i < games.length; i += CHUNK_SIZE) {
-            const chunk = games.slice(i, i + CHUNK_SIZE);
+        for (let i = 0; i < validGames.length; i += CHUNK_SIZE) {
+            const chunk = validGames.slice(i, i + CHUNK_SIZE);
             await prisma_1.default.$transaction(chunk.map(game => {
                 const payload = {
                     id: String(game.id),
@@ -42,13 +40,19 @@ class GameRepository {
                 });
             }));
         }
-        // 3. marcar como inactivos los juegos que ya no están en la lista del proveedor
-        const activeIds = games.map(g => String(g.id));
+        // 3. marcar como inactivos los juegos que ya no están en la lista filtrada,
+        // pero SOLO para los proveedores que vinieron en este lote de sincronización.
+        const syncedProviderIds = [...new Set(games.map(g => String(g.providerId)))];
+        const validSyncedProviderIds = syncedProviderIds.filter(id => knownProviderIds.has(id));
+        const activeIds = validGames.map(g => String(g.id));
         await prisma_1.default.game.updateMany({
-            where: { id: { notIn: activeIds } },
+            where: {
+                providerId: { in: validSyncedProviderIds },
+                id: { notIn: activeIds }
+            },
             data: { isActive: false }
         });
-        return { added: games.length, updated: 0 };
+        return { added: validGames.length, updated: 0 };
     }
     /**
      * obtiene juegos con soporte de filtros y paginación.

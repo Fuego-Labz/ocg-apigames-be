@@ -14,7 +14,7 @@ const getGamesSchema = z.object({
 export class GameController {
   public async syncGames(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const environment = (req.query.env || req.body.env) as string;
+      const environment = (req.query.env || req.body?.env) as string;
       const result = await gameService.syncGames(environment);
       res.status(200).json(result);
     } catch (error) {
