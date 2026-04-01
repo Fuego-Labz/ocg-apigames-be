@@ -218,7 +218,7 @@ GET /api/games/categories
 GET /api/games/providers
 ```
 
-Solo devuelve los proveedores permitidos: **PragmaticPlay** (4), **Fugaso** (7), **TurboGames** (58), **PGSoft** (64), **PragmaticPlay2** (109).
+Solo devuelve los proveedores permitidos: **PragmaticPlay** (4), **Fugaso** (7), **TurboGames** (58), **PGSoft** (64).
 
 **Respuesta:**
 ```json
@@ -340,7 +340,7 @@ El caché se invalida automáticamente después de cada sincronización (`POST /
 
 Los endpoints de lectura aplican un filtro global que:
 
-- **Solo muestra juegos** de los proveedores: PragmaticPlay (`4`), Fugaso (`7`), TurboGames (`58`), PGSoft (`64`), PragmaticPlay2 (`109`) + juegos en vivo (`isLive: true`).
+- **Solo muestra juegos** de los proveedores: PragmaticPlay (`4`), Fugaso (`7`), TurboGames (`58`), PGSoft (`64`) + juegos en vivo (`isLive: true`).
 - **Excluye juegos** que contengan "plinko" en el nombre (case-insensitive).
 
 Los juegos de otros proveedores se sincronizan y almacenan en la DB, pero no se exponen en la API. Para agregar o quitar proveedores, modificar `ALLOWED_PROVIDER_IDS` en `src/repositories/game.repository.ts`.

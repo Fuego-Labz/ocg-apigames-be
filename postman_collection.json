@@ -61,7 +61,6 @@
             { "key": "providerId", "value": "7", "description": "Fugaso", "disabled": true },
             { "key": "providerId", "value": "58", "description": "TurboGames", "disabled": true },
             { "key": "providerId", "value": "64", "description": "PGSoft", "disabled": true },
-            { "key": "providerId", "value": "109", "description": "PragmaticPlay2", "disabled": true },
             { "key": "isLive", "value": "true", "disabled": true }
           ]
         }
