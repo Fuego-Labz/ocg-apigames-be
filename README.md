@@ -71,9 +71,13 @@ FRONTEND_URL=http://localhost:5173
 
 # (opcional) Expresión cron para sincronización automática (default: cada 6 horas)
 SYNC_CRON=0 */6 * * *
+
+# URL externa del servicio en Render (inyectada automáticamente o manual)
+RENDER_EXTERNAL_URL=https://tu-servicio.onrender.com
 ```
 
 > ⚠️ **Importante:** Cambiar `DATABASE_URL` y `API_KEY` antes de desplegar a producción.
+> En Render, asegurarse de que `NODE_ENV=production` y `RENDER_EXTERNAL_URL` estén definidas.
 
 ---
 
@@ -214,14 +218,17 @@ GET /api/games/categories
 GET /api/games/providers
 ```
 
+Solo devuelve los proveedores permitidos: **PragmaticPlay** (4), **Fugaso** (7), **TurboGames** (58), **PGSoft** (64), **PragmaticPlay2** (109).
+
 **Respuesta:**
 ```json
 {
   "success": true,
   "data": [
-    { "id": "9", "name": "Fugaso" },
-    { "id": "10", "name": "Betsoft" },
-    { "id": "57", "name": "Pragmatic Play" }
+    { "id": "7", "name": "Fugaso" },
+    { "id": "4", "name": "PragmaticPlay" },
+    { "id": "64", "name": "PGSoft" },
+    { "id": "58", "name": "TurboGames" }
   ]
 }
 ```
@@ -329,11 +336,36 @@ El caché se invalida automáticamente después de cada sincronización (`POST /
 
 ---
 
+## Filtro de proveedores y juegos
+
+Los endpoints de lectura aplican un filtro global que:
+
+- **Solo muestra juegos** de los proveedores: PragmaticPlay (`4`), Fugaso (`7`), TurboGames (`58`), PGSoft (`64`), PragmaticPlay2 (`109`) + juegos en vivo (`isLive: true`).
+- **Excluye juegos** que contengan "plinko" en el nombre (case-insensitive).
+
+Los juegos de otros proveedores se sincronizan y almacenan en la DB, pero no se exponen en la API. Para agregar o quitar proveedores, modificar `ALLOWED_PROVIDER_IDS` en `src/repositories/game.repository.ts`.
+
+---
+
+## Keep-Alive (anti cold start)
+
+En producción, el servidor se auto-pinguea cada 14 minutos al endpoint `/health` para evitar que Render apague el servicio por inactividad (plan Free).
+
+Requiere la variable `RENDER_EXTERNAL_URL` configurada en Render.
+
+---
+
 ## Sincronización automática
 
 En producción (`NODE_ENV=production`), un cron job ejecuta la sincronización automáticamente cada 6 horas (configurable vía `SYNC_CRON` en `.env`).
 
 En desarrollo, usar el endpoint `POST /api/games/sync` manualmente desde Postman.
+
+---
+
+## Pre-calentamiento del cache
+
+Al iniciar el servidor, se pre-cargan en cache las queries más comunes (`getGames`, `getHomeGames`, `getCategories`, `getProviders`) para que la primera request de un usuario ya tenga datos en cache y no golpee la base de datos.
 
 ---
 
@@ -358,8 +390,10 @@ src/
 │   ├── game.service.ts          # lógica de negocio + caché
 │   └── lucky-streak.service.ts  # cliente API del proveedor
 ├── utils/
-│   ├── cache.ts    # servicio de caché en memoria
-│   └── logger.ts   # configuración de Winston
+│   ├── cache.ts          # servicio de caché en memoria
+│   ├── cache-warmup.ts   # pre-calentamiento del caché al iniciar
+│   ├── keep-alive.ts     # self-ping para evitar cold start en Render
+│   └── logger.ts         # configuración de Winston
 ├── app.ts      # configuración de Express
 └── server.ts   # punto de entrada
 ```

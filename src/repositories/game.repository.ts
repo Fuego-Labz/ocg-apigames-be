@@ -1,6 +1,22 @@
 import { Game, Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
 
+// proveedores permitidos para mostrar en el frontend
+const ALLOWED_PROVIDER_IDS = ['4', '7', '58', '64', '109']; // PragmaticPlay, Fugaso, TurboGames, PGSoft, PragmaticPlay2
+
+// filtro base que aplica a todas las queries de lectura:
+// solo providers permitidos o juegos live, y excluir "plinko" del nombre
+const BASE_FILTER: Prisma.GameWhereInput = {
+  isActive: true,
+  OR: [
+    { providerId: { in: ALLOWED_PROVIDER_IDS } },
+    { isLive: true },
+  ],
+  NOT: {
+    name: { contains: 'plinko', mode: 'insensitive' },
+  },
+};
+
 // los campos que el esquema prisma conoce
 export type GameInput = {
   id: string;
@@ -76,13 +92,12 @@ export class GameRepository {
    * obtiene juegos con soporte de filtros y paginación.
    */
   public async getGames(filters: { search?: string; type?: string; providerId?: string; isLive?: boolean }, skip: number, take: number): Promise<{ data: Game[], total: number }> {
-    const whereClause: Prisma.GameWhereInput = { isActive: true };
+    const whereClause: Prisma.GameWhereInput = { ...BASE_FILTER };
 
     // búsqueda por texto en el nombre del juego (case-insensitive)
     if (filters.search) {
-      whereClause.name = {
-        contains: filters.search,
-        mode: 'insensitive',
+      whereClause.AND = {
+        name: { contains: filters.search, mode: 'insensitive' },
       };
     }
 
@@ -123,7 +138,7 @@ export class GameRepository {
     const categories = await prisma.game.findMany({
       select: { type: true },
       distinct: ['type'],
-      where: { type: { not: '' } },
+      where: { ...BASE_FILTER, type: { not: '' } },
       orderBy: { type: 'asc' }
     });
     const list = categories.map(c => c.type);
@@ -142,14 +157,14 @@ export class GameRepository {
   public async getHomeGames(limit: number = 12): Promise<{ live: Game[], recent: Game[], randomSlots: Game[] }> {
     // obtener los últimos juegos agregados
     const recent = await prisma.game.findMany({
-      where: { isActive: true },
+      where: { ...BASE_FILTER },
       take: limit,
       orderBy: { createdAt: 'desc' }
     });
 
     // obtener juegos en vivo
     const live = await prisma.game.findMany({
-      where: { isLive: true, isActive: true },
+      where: { ...BASE_FILTER, isLive: true },
       take: limit,
       orderBy: [
         { priority: 'desc' },
@@ -159,11 +174,12 @@ export class GameRepository {
 
     // obtener juegos de slots o normales (no en vivo) como ejemplos aleatorios
     // usando un offset aleatorio basado en el total disponible para que cambien
-    const totalSlots = await prisma.game.count({ where: { isLive: false, isActive: true } });
+    const slotsFilter = { ...BASE_FILTER, isLive: false };
+    const totalSlots = await prisma.game.count({ where: slotsFilter });
     const randomSkip = Math.floor(Math.random() * Math.max(0, totalSlots - limit));
 
     const randomSlots = await prisma.game.findMany({
-      where: { isLive: false, isActive: true },
+      where: slotsFilter,
       take: limit,
       skip: randomSkip,
       orderBy: { id: 'asc' } // el orden determinista sobre un offset aleatorio es más estable
@@ -177,6 +193,7 @@ export class GameRepository {
    */
   public async getProviders() {
     return await prisma.provider.findMany({
+      where: { id: { in: ALLOWED_PROVIDER_IDS } },
       orderBy: { name: 'asc' }
     });
   }
@@ -186,7 +203,7 @@ export class GameRepository {
    */
   public async getGameById(id: string) {
     const game = await prisma.game.findFirst({
-      where: { id, isActive: true }
+      where: { ...BASE_FILTER, id }
     });
     if (!game) return null;
 

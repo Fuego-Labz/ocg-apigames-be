@@ -5,6 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gameRepository = exports.GameRepository = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
+// proveedores permitidos para mostrar en el frontend
+const ALLOWED_PROVIDER_IDS = ['4', '7', '58', '64', '109']; // PragmaticPlay, Fugaso, TurboGames, PGSoft, PragmaticPlay2
+// filtro base que aplica a todas las queries de lectura:
+// solo providers permitidos o juegos live, y excluir "plinko" del nombre
+const BASE_FILTER = {
+    isActive: true,
+    OR: [
+        { providerId: { in: ALLOWED_PROVIDER_IDS } },
+        { isLive: true },
+    ],
+    NOT: {
+        name: { contains: 'plinko', mode: 'insensitive' },
+    },
+};
 class GameRepository {
     /**
      * inserta o actualiza múltiples juegos en la base de datos.
@@ -58,12 +72,11 @@ class GameRepository {
      * obtiene juegos con soporte de filtros y paginación.
      */
     async getGames(filters, skip, take) {
-        const whereClause = { isActive: true };
+        const whereClause = { ...BASE_FILTER };
         // búsqueda por texto en el nombre del juego (case-insensitive)
         if (filters.search) {
-            whereClause.name = {
-                contains: filters.search,
-                mode: 'insensitive',
+            whereClause.AND = {
+                name: { contains: filters.search, mode: 'insensitive' },
             };
         }
         // si el tipo es 'live' o 'LIVE', lo tratamos como el flag isLive en lugar de buscar por columna type
@@ -101,7 +114,7 @@ class GameRepository {
         const categories = await prisma_1.default.game.findMany({
             select: { type: true },
             distinct: ['type'],
-            where: { type: { not: '' } },
+            where: { ...BASE_FILTER, type: { not: '' } },
             orderBy: { type: 'asc' }
         });
         const list = categories.map(c => c.type);
@@ -117,13 +130,13 @@ class GameRepository {
     async getHomeGames(limit = 12) {
         // obtener los últimos juegos agregados
         const recent = await prisma_1.default.game.findMany({
-            where: { isActive: true },
+            where: { ...BASE_FILTER },
             take: limit,
             orderBy: { createdAt: 'desc' }
         });
         // obtener juegos en vivo
         const live = await prisma_1.default.game.findMany({
-            where: { isLive: true, isActive: true },
+            where: { ...BASE_FILTER, isLive: true },
             take: limit,
             orderBy: [
                 { priority: 'desc' },
@@ -132,10 +145,11 @@ class GameRepository {
         });
         // obtener juegos de slots o normales (no en vivo) como ejemplos aleatorios
         // usando un offset aleatorio basado en el total disponible para que cambien
-        const totalSlots = await prisma_1.default.game.count({ where: { isLive: false, isActive: true } });
+        const slotsFilter = { ...BASE_FILTER, isLive: false };
+        const totalSlots = await prisma_1.default.game.count({ where: slotsFilter });
         const randomSkip = Math.floor(Math.random() * Math.max(0, totalSlots - limit));
         const randomSlots = await prisma_1.default.game.findMany({
-            where: { isLive: false, isActive: true },
+            where: slotsFilter,
             take: limit,
             skip: randomSkip,
             orderBy: { id: 'asc' } // el orden determinista sobre un offset aleatorio es más estable
@@ -147,6 +161,7 @@ class GameRepository {
      */
     async getProviders() {
         return await prisma_1.default.provider.findMany({
+            where: { id: { in: ALLOWED_PROVIDER_IDS } },
             orderBy: { name: 'asc' }
         });
     }
@@ -155,7 +170,7 @@ class GameRepository {
      */
     async getGameById(id) {
         const game = await prisma_1.default.game.findFirst({
-            where: { id, isActive: true }
+            where: { ...BASE_FILTER, id }
         });
         if (!game)
             return null;

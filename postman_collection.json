@@ -4,6 +4,13 @@
     "description": "API collection for testing OCGames Backend Endpoints",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
   "item": [
     {
       "name": "Health Check",
@@ -11,10 +18,8 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/health",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
           "path": ["health"]
         }
       }
@@ -31,10 +36,8 @@
           }
         ],
         "url": {
-          "raw": "http://localhost:3000/api/games/sync",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
+          "raw": "{{baseUrl}}/api/games/sync",
+          "host": ["{{baseUrl}}"],
           "path": ["api", "games", "sync"]
         }
       }
@@ -45,18 +48,106 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/games?page=1&limit=20&search=roulette",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20",
+          "host": ["{{baseUrl}}"],
           "path": ["api", "games"],
           "query": [
             { "key": "page", "value": "1" },
             { "key": "limit", "value": "20" },
-            { "key": "search", "value": "roulette" },
+            { "key": "search", "value": "roulette", "disabled": true },
+            { "key": "type", "value": "SLOTS", "disabled": true },
             { "key": "type", "value": "LIVE", "disabled": true },
-            { "key": "providerId", "value": "lucky-streak", "disabled": true },
+            { "key": "providerId", "value": "4", "description": "PragmaticPlay", "disabled": true },
+            { "key": "providerId", "value": "7", "description": "Fugaso", "disabled": true },
+            { "key": "providerId", "value": "58", "description": "TurboGames", "disabled": true },
+            { "key": "providerId", "value": "64", "description": "PGSoft", "disabled": true },
+            { "key": "providerId", "value": "109", "description": "PragmaticPlay2", "disabled": true },
             { "key": "isLive", "value": "true", "disabled": true }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Games by Provider - PragmaticPlay",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20&providerId=4",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "providerId", "value": "4" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Games by Provider - Fugaso",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20&providerId=7",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "providerId", "value": "7" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Games by Provider - TurboGames",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20&providerId=58",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "providerId", "value": "58" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Games by Provider - PGSoft",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20&providerId=64",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "providerId", "value": "64" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Live Games",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20&isLive=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "isLive", "value": "true" }
           ]
         }
       }
@@ -67,11 +158,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/games/home",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
-          "path": ["api", "games", "home"]
+          "raw": "{{baseUrl}}/api/games/home?limit=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games", "home"],
+          "query": [
+            { "key": "limit", "value": "20" }
+          ]
         }
       }
     },
@@ -81,24 +173,20 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/games/categories",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
+          "raw": "{{baseUrl}}/api/games/categories",
+          "host": ["{{baseUrl}}"],
           "path": ["api", "games", "categories"]
         }
       }
     },
     {
-      "name": "Get Unique Providers",
+      "name": "Get Providers (filtered)",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/games/providers",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
+          "raw": "{{baseUrl}}/api/games/providers",
+          "host": ["{{baseUrl}}"],
           "path": ["api", "games", "providers"]
         }
       }
@@ -109,10 +197,8 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/games/30154",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "3000",
+          "raw": "{{baseUrl}}/api/games/30154",
+          "host": ["{{baseUrl}}"],
           "path": ["api", "games", "30154"]
         }
       }
