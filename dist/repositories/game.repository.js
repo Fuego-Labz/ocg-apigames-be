@@ -85,7 +85,10 @@ class GameRepository {
                 where: whereClause,
                 skip,
                 take,
-                orderBy: { createdAt: 'desc' },
+                orderBy: [
+                    { priority: 'desc' },
+                    { name: 'asc' }
+                ],
             }),
             prisma_1.default.game.count({ where: whereClause }),
         ]);
@@ -122,6 +125,10 @@ class GameRepository {
         const live = await prisma_1.default.game.findMany({
             where: { isLive: true, isActive: true },
             take: limit,
+            orderBy: [
+                { priority: 'desc' },
+                { name: 'asc' }
+            ]
         });
         // obtener juegos de slots o normales (no en vivo) como ejemplos aleatorios
         // usando un offset aleatorio basado en el total disponible para que cambien

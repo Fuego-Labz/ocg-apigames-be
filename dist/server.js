@@ -7,11 +7,19 @@ const app_1 = __importDefault(require("./app"));
 const env_config_1 = require("./config/env.config");
 const logger_1 = require("./utils/logger");
 const cron_1 = require("./config/cron");
+const cache_warmup_1 = require("./utils/cache-warmup");
+const keep_alive_1 = require("./utils/keep-alive");
 const startServer = async () => {
     try {
-        app_1.default.listen(env_config_1.env.PORT, () => {
+        app_1.default.listen(env_config_1.env.PORT, async () => {
             logger_1.logger.info(`🚀 Server running on port ${env_config_1.env.PORT} in ${env_config_1.env.NODE_ENV} mode`);
             (0, cron_1.registerCronJobs)();
+            // pre-calentar el caché con los datos más consultados
+            await (0, cache_warmup_1.warmUpCache)();
+            // self-ping para evitar que Render apague el servidor por inactividad
+            if (env_config_1.env.NODE_ENV === 'production') {
+                (0, keep_alive_1.startKeepAlive)();
+            }
         });
     }
     catch (error) {
