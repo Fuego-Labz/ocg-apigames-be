@@ -21,8 +21,12 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 // 3. configuración CORS (restringe orígenes no verificados en producción)
+const allowedOrigins = env.NODE_ENV === 'production'
+  ? [env.FRONTEND_URL, 'https://beta.ocgames.io']
+  : '*';
+
 app.use(cors({
-  origin: env.NODE_ENV === 'production' ? env.FRONTEND_URL : '*',
+  origin: allowedOrigins,
   optionsSuccessStatus: 200
 }));
 
