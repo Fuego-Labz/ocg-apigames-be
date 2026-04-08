@@ -5,7 +5,6 @@ import rateLimit from 'express-rate-limit';
 import { errorHandler } from './middlewares/error.middleware';
 import { logger } from './utils/logger';
 import gameRoutes from './routes/game.routes';
-import { env } from './config/env.config';
 
 const app = express();
 
@@ -20,15 +19,8 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
-// 3. configuración CORS (restringe orígenes no verificados en producción)
-const allowedOrigins = env.NODE_ENV === 'production'
-  ? [env.FRONTEND_URL, 'https://beta.ocgames.io']
-  : '*';
-
-app.use(cors({
-  origin: allowedOrigins,
-  optionsSuccessStatus: 200
-}));
+// 3. CORS abierto (protegido por rate limit + API key)
+app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
