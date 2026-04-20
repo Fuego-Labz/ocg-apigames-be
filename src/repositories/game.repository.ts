@@ -2,7 +2,7 @@ import { Game, Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
 
 // proveedores permitidos para mostrar en el frontend
-const ALLOWED_PROVIDER_IDS = ['4', '7', '58', '64']; // PragmaticPlay, Fugaso, TurboGames, PGSoft
+const ALLOWED_PROVIDER_IDS = ['4', '7', '8', '58', '64']; // PragmaticPlay, Fugaso, BGaming, TurboGames, PGSoft
 
 // filtro base que aplica a todas las queries de lectura:
 // solo providers permitidos, activos, y excluir "plinko" del nombre.
