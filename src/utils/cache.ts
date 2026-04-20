@@ -26,6 +26,42 @@ export async function getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttl?: 
 }
 
 /**
+ * obtiene un valor del caché con fallback a datos stale.
+ * patrón "fresh window + stale backup":
+ * - si existe en ventana fresca → devuelve directo.
+ * - si no, llama a fetchFn y guarda en fresh + stale.
+ * - si fetchFn falla y hay valor stale → lo sirve con log warn.
+ * - si no hay stale → propaga el error (503).
+ */
+export async function getOrSetWithFallback<T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  freshTtl: number,
+  staleTtl: number,
+): Promise<T> {
+  const fresh = cache.get<T>(key);
+  if (fresh !== undefined) {
+    logger.debug(`[CACHE] HIT (fresh) -> ${key}`);
+    return fresh;
+  }
+
+  try {
+    logger.debug(`[CACHE] MISS -> ${key}, fetching from source...`);
+    const data = await fetchFn();
+    cache.set(key, data, freshTtl);
+    cache.set(`${key}:stale`, data, staleTtl);
+    return data;
+  } catch (err) {
+    const stale = cache.get<T>(`${key}:stale`);
+    if (stale !== undefined) {
+      logger.warn(`[CACHE] Fetch falló para "${key}", sirviendo stale backup`);
+      return stale;
+    }
+    throw err;
+  }
+}
+
+/**
  * invalida todas las claves que empiezan con el prefijo dado.
  * útil para limpiar el caché después de una sincronización.
  */

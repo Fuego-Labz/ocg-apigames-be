@@ -10,7 +10,6 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const error_middleware_1 = require("./middlewares/error.middleware");
 const logger_1 = require("./utils/logger");
 const game_routes_1 = __importDefault(require("./routes/game.routes"));
-const env_config_1 = require("./config/env.config");
 const app = (0, express_1.default)();
 // 1. cabeceras de seguridad HTTP
 app.use((0, helmet_1.default)());
@@ -21,11 +20,8 @@ const apiLimiter = (0, express_rate_limit_1.default)({
     message: { success: false, message: 'Too many requests from this IP, please try again later.' }
 });
 app.use('/api', apiLimiter);
-// 3. configuración CORS (restringe orígenes no verificados en producción)
-app.use((0, cors_1.default)({
-    origin: env_config_1.env.NODE_ENV === 'production' ? env_config_1.env.FRONTEND_URL : '*',
-    optionsSuccessStatus: 200
-}));
+// 3. CORS abierto (protegido por rate limit + API key)
+app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // Middleware de registro de peticiones (filtra ruido de socket.io)

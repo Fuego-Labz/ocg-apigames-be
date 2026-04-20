@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrSet = getOrSet;
+exports.getOrSetWithFallback = getOrSetWithFallback;
 exports.invalidateByPrefix = invalidateByPrefix;
 exports.flushCache = flushCache;
 const node_cache_1 = __importDefault(require("node-cache"));
@@ -28,6 +29,36 @@ async function getOrSet(key, fetchFn, ttl) {
     const data = await fetchFn();
     cache.set(key, data, ttl ?? 300);
     return data;
+}
+/**
+ * obtiene un valor del caché con fallback a datos stale.
+ * patrón "fresh window + stale backup":
+ * - si existe en ventana fresca → devuelve directo.
+ * - si no, llama a fetchFn y guarda en fresh + stale.
+ * - si fetchFn falla y hay valor stale → lo sirve con log warn.
+ * - si no hay stale → propaga el error (503).
+ */
+async function getOrSetWithFallback(key, fetchFn, freshTtl, staleTtl) {
+    const fresh = cache.get(key);
+    if (fresh !== undefined) {
+        logger_1.logger.debug(`[CACHE] HIT (fresh) -> ${key}`);
+        return fresh;
+    }
+    try {
+        logger_1.logger.debug(`[CACHE] MISS -> ${key}, fetching from source...`);
+        const data = await fetchFn();
+        cache.set(key, data, freshTtl);
+        cache.set(`${key}:stale`, data, staleTtl);
+        return data;
+    }
+    catch (err) {
+        const stale = cache.get(`${key}:stale`);
+        if (stale !== undefined) {
+            logger_1.logger.warn(`[CACHE] Fetch falló para "${key}", sirviendo stale backup`);
+            return stale;
+        }
+        throw err;
+    }
 }
 /**
  * invalida todas las claves que empiezan con el prefijo dado.
