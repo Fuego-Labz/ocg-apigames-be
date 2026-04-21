@@ -139,9 +139,7 @@ export class GameService {
           logger.warn(`[GameService] live games unavailable, returning empty: ${err?.message}`);
           return [] as Game[];
         });
-        // limitar live a los providers permitidos del consumer
-        const allowed = allLive.filter(g => providerIds.includes(g.providerId));
-        const filtered = this.filterLiveGames(allowed, filters);
+        const filtered = this.filterLiveGames(allLive, filters);
         const total = filtered.length;
 
         const skip = (page - 1) * limit;
@@ -175,8 +173,7 @@ export class GameService {
         logger.warn(`[GameService] live games unavailable, merging DB only: ${err?.message}`);
         return [] as Game[];
       });
-      const allowedLive = allLive.filter(g => providerIds.includes(g.providerId));
-      const filteredLive = this.filterLiveGames(allowedLive, filters);
+      const filteredLive = this.filterLiveGames(allLive, filters);
 
       const dbFilters = { ...filters };
       const totalLive = filteredLive.length;
@@ -264,11 +261,8 @@ export class GameService {
         gameRepository.getHomeGames(providerIds, effectiveLimit),
       ]);
 
-      // limitar live a los providers permitidos del consumer
-      const allowedLive = liveGames.filter(g => providerIds.includes(g.providerId));
-
       return {
-        live: allowedLive.slice(0, effectiveLimit),
+        live: liveGames.slice(0, effectiveLimit),
         recent: repoData.recent,
         randomSlots: repoData.randomSlots,
       };
