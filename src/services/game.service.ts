@@ -5,6 +5,7 @@ import { logger } from '../utils/logger';
 import { getOrSet, getOrSetWithFallback, flushCache } from '../utils/cache';
 import { env } from '../config/env.config';
 import prisma from '../config/prisma';
+import { resolveProviderIds } from '../config/consumers.config';
 
 /**
  * convierte un juego de la API de LuckyStreak a la forma Game que espera el frontend.
@@ -121,17 +122,26 @@ export class GameService {
   public async getGames(
     page: number = 1,
     limit: number = 20,
-    filters: { search?: string; type?: string; providerId?: string; isLive?: boolean }
+    filters: { search?: string; type?: string; providerId?: string; isLive?: boolean },
+    consumer?: string
   ) {
+    const providerIds = resolveProviderIds(consumer);
+    const consumerKey = consumer ?? 'default';
     const isLiveRequest = filters.isLive === true || filters.type?.toUpperCase() === 'LIVE';
     const isNormalRequest = filters.isLive === false;
 
     // ── caso 1: solo live (cache/API) ──
     if (isLiveRequest) {
-      const cacheKey = `games:live:${page}:${limit}:${JSON.stringify(filters)}`;
+      const cacheKey = `games:live:${consumerKey}:${page}:${limit}:${JSON.stringify(filters)}`;
       return getOrSet(cacheKey, async () => {
-        const allLive = await this.getLiveGamesCached();
-        const filtered = this.filterLiveGames(allLive, filters);
+        // si la API externa falla, devolvemos lista vacía en vez de 500
+        const allLive = await this.getLiveGamesCached().catch(err => {
+          logger.warn(`[GameService] live games unavailable, returning empty: ${err?.message}`);
+          return [] as Game[];
+        });
+        // limitar live a los providers permitidos del consumer
+        const allowed = allLive.filter(g => providerIds.includes(g.providerId));
+        const filtered = this.filterLiveGames(allowed, filters);
         const total = filtered.length;
 
         const skip = (page - 1) * limit;
@@ -146,10 +156,10 @@ export class GameService {
 
     // ── caso 2: solo normales (DB) ──
     if (isNormalRequest) {
-      const cacheKey = `games:normal:${page}:${limit}:${JSON.stringify(filters)}`;
+      const cacheKey = `games:normal:${consumerKey}:${page}:${limit}:${JSON.stringify(filters)}`;
       return getOrSet(cacheKey, async () => {
         const skip = (page - 1) * limit;
-        const { data, total } = await gameRepository.getGames(filters, skip, limit);
+        const { data, total } = await gameRepository.getGames(providerIds, filters, skip, limit);
         return {
           data,
           meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
@@ -158,11 +168,15 @@ export class GameService {
     }
 
     // ── caso 3: merge live + normales (sin filtro isLive) ──
-    const cacheKey = `games:merged:${page}:${limit}:${JSON.stringify(filters)}`;
+    const cacheKey = `games:merged:${consumerKey}:${page}:${limit}:${JSON.stringify(filters)}`;
     return getOrSet(cacheKey, async () => {
-      // obtener live filtrados
-      const allLive = await this.getLiveGamesCached();
-      const filteredLive = this.filterLiveGames(allLive, filters);
+      // si la API externa falla, el merge sigue con solo normales (DB)
+      const allLive = await this.getLiveGamesCached().catch(err => {
+        logger.warn(`[GameService] live games unavailable, merging DB only: ${err?.message}`);
+        return [] as Game[];
+      });
+      const allowedLive = allLive.filter(g => providerIds.includes(g.providerId));
+      const filteredLive = this.filterLiveGames(allowedLive, filters);
 
       const dbFilters = { ...filters };
       const totalLive = filteredLive.length;
@@ -178,11 +192,11 @@ export class GameService {
         let dbData: Game[] = [];
         let dbTotal = 0;
         if (remaining > 0) {
-          const result = await gameRepository.getGames(dbFilters, 0, remaining);
+          const result = await gameRepository.getGames(providerIds, dbFilters, 0, remaining);
           dbData = result.data;
           dbTotal = result.total;
         } else {
-          dbTotal = (await gameRepository.getGames(dbFilters, 0, 0)).total;
+          dbTotal = (await gameRepository.getGames(providerIds, dbFilters, 0, 0)).total;
         }
 
         const total = totalLive + dbTotal;
@@ -193,7 +207,7 @@ export class GameService {
       } else {
         // la página ya pasó todos los live, solo DB
         const dbSkip = skip - totalLive;
-        const { data: dbData, total: dbTotal } = await gameRepository.getGames(dbFilters, dbSkip, limit);
+        const { data: dbData, total: dbTotal } = await gameRepository.getGames(providerIds, dbFilters, dbSkip, limit);
         const total = totalLive + dbTotal;
 
         return {
@@ -209,15 +223,20 @@ export class GameService {
    * combina los tipos de la DB (normales) con los subtipos de los live games
    * cacheados (ROULETTE, BLACKJACK, BACCARAT, etc.). se cachea por 10 minutos.
    */
-  public async getCategories() {
-    return getOrSet('categories', async () => {
+  public async getCategories(consumer?: string) {
+    const providerIds = resolveProviderIds(consumer);
+    const consumerKey = consumer ?? 'default';
+    return getOrSet(`categories:${consumerKey}`, async () => {
       const [dbCategories, liveGames] = await Promise.all([
-        gameRepository.getCategories(),
+        gameRepository.getCategories(providerIds),
         this.getLiveGamesCached().catch(() => [] as Game[]),
       ]);
 
       const liveTypes = [...new Set(
-        liveGames.map(g => g.type).filter((t): t is string => Boolean(t))
+        liveGames
+          .filter(g => providerIds.includes(g.providerId))
+          .map(g => g.type)
+          .filter((t): t is string => Boolean(t))
       )];
 
       return [...new Set([...dbCategories, ...liveTypes])];
@@ -229,18 +248,27 @@ export class GameService {
    * live viene del cache/API; recent y randomSlots del repositorio (DB).
    * se cachea por 2 minutos (para que los slots aleatorios varíen con frecuencia).
    */
-  public async getHomeGames(limit?: number) {
+  public async getHomeGames(limit?: number, consumer?: string) {
     const effectiveLimit = limit ?? 12;
-    const cacheKey = `home:${effectiveLimit}`;
+    const providerIds = resolveProviderIds(consumer);
+    const consumerKey = consumer ?? 'default';
+    const cacheKey = `home:${consumerKey}:${effectiveLimit}`;
 
     return getOrSet(cacheKey, async () => {
       const [liveGames, repoData] = await Promise.all([
-        this.getLiveGamesCached(),
-        gameRepository.getHomeGames(effectiveLimit),
+        // si la API externa falla, seguimos con recent + randomSlots y live vacío
+        this.getLiveGamesCached().catch(err => {
+          logger.warn(`[GameService] live games unavailable for home, skipping: ${err?.message}`);
+          return [] as Game[];
+        }),
+        gameRepository.getHomeGames(providerIds, effectiveLimit),
       ]);
 
+      // limitar live a los providers permitidos del consumer
+      const allowedLive = liveGames.filter(g => providerIds.includes(g.providerId));
+
       return {
-        live: liveGames.slice(0, effectiveLimit),
+        live: allowedLive.slice(0, effectiveLimit),
         recent: repoData.recent,
         randomSlots: repoData.randomSlots,
       };
@@ -251,8 +279,10 @@ export class GameService {
    * obtiene los proveedores únicos de juegos.
    * se cachea por 10 minutos (cambian muy poco).
    */
-  public async getProviders() {
-    return getOrSet('providers', () => gameRepository.getProviders(), 600);
+  public async getProviders(consumer?: string) {
+    const providerIds = resolveProviderIds(consumer);
+    const consumerKey = consumer ?? 'default';
+    return getOrSet(`providers:${consumerKey}`, () => gameRepository.getProviders(providerIds), 600);
   }
 
   /**
@@ -260,12 +290,14 @@ export class GameService {
    * primero busca en el cache de live games; si no lo encuentra, cae al repo (DB).
    * se cachea por 5 minutos.
    */
-  public async getGameById(id: string) {
-    return getOrSet(`game:${id}`, async () => {
-      // 1. buscar en los live games cacheados
+  public async getGameById(id: string, consumer?: string) {
+    const providerIds = resolveProviderIds(consumer);
+    const consumerKey = consumer ?? 'default';
+    return getOrSet(`game:${consumerKey}:${id}`, async () => {
+      // 1. buscar en los live games cacheados (restringido a providers del consumer)
       try {
         const liveGames = await this.getLiveGamesCached();
-        const liveMatch = liveGames.find(g => g.id === id);
+        const liveMatch = liveGames.find(g => g.id === id && providerIds.includes(g.providerId));
         if (liveMatch) {
           // resolver providerName desde la tabla Provider
           const provider = await prisma.provider.findUnique({ where: { id: liveMatch.providerId } });
@@ -277,7 +309,7 @@ export class GameService {
       }
 
       // 2. fallback a DB
-      return gameRepository.getGameById(id);
+      return gameRepository.getGameById(providerIds, id);
     });
   }
 }

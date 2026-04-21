@@ -201,6 +201,94 @@
           "path": ["api", "games", "30154"]
         }
       }
+    },
+    {
+      "name": "Consumer: 777vault",
+      "description": "Endpoints con ?consumer=777vault para ampliar la lista de providers permitidos. Si se omite el param, cae al default (OCG).",
+      "item": [
+        {
+          "name": "Get Games (consumer=777vault)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games?page=1&limit=20&consumer=777vault",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "consumer", "value": "777vault" },
+                { "key": "search", "value": "roulette", "disabled": true },
+                { "key": "type", "value": "LIVE", "disabled": true },
+                { "key": "providerId", "value": "1", "description": "BetSoft", "disabled": true },
+                { "key": "isLive", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Homepage Games (consumer=777vault)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/home?limit=20&consumer=777vault",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "home"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "consumer", "value": "777vault" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Categories (consumer=777vault)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/categories?consumer=777vault",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "categories"],
+              "query": [
+                { "key": "consumer", "value": "777vault" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Providers (consumer=777vault)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/providers?consumer=777vault",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "providers"],
+              "query": [
+                { "key": "consumer", "value": "777vault" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Game By ID (consumer=777vault)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/30154?consumer=777vault",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "30154"],
+              "query": [
+                { "key": "consumer", "value": "777vault" }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
