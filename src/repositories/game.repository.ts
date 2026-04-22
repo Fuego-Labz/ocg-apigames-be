@@ -42,6 +42,16 @@ export class GameRepository {
     // filtrar los juegos recibidos para guardar SOLO los que pertenecen a proveedores configurados
     const validGames = games.filter(g => knownProviderIds.has(String(g.providerId)));
 
+    // determinar cuáles ya existen para contar correctamente added vs updated
+    const validGameIds = validGames.map(g => String(g.id));
+    const existing = await prisma.game.findMany({
+      where: { id: { in: validGameIds } },
+      select: { id: true }
+    });
+    const existingIds = new Set(existing.map(e => e.id));
+    const updatedCount = validGames.filter(g => existingIds.has(String(g.id))).length;
+    const addedCount = validGames.length - updatedCount;
+
     // 2. upsert de juegos en chunks de CHUNK_SIZE
     for (let i = 0; i < validGames.length; i += CHUNK_SIZE) {
       const chunk = validGames.slice(i, i + CHUNK_SIZE);
@@ -82,7 +92,7 @@ export class GameRepository {
       data: { isActive: false }
     });
 
-    return { added: validGames.length, updated: 0 };
+    return { added: addedCount, updated: updatedCount };
   }
 
   /**

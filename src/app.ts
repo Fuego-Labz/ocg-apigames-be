@@ -8,10 +8,10 @@ import gameRoutes from './routes/game.routes';
 
 const app = express();
 
-// 1. cabeceras de seguridad HTTP
+// cabeceras de seguridad HTTP
 app.use(helmet());
 
-// 2. limitación de tasa (100 peticiones por minuto por IP)
+// limitación de tasa (100 peticiones por minuto por IP)
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 100,
@@ -19,7 +19,7 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
-// 3. CORS abierto (protegido por rate limit + API key)
+// CORS abierto (protegido por rate limit + API key)
 app.use(cors());
 
 app.use(express.json());
