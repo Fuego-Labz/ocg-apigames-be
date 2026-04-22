@@ -59,11 +59,11 @@ export class GameService {
       // invalidar todo el caché después de sincronizar (incluido live:all y stale)
       flushCache();
 
-      logger.info(`Synchronization complete. Processed ${result.added} normal games.`);
+      logger.info(`Synchronization complete. Added ${result.added}, updated ${result.updated} normal games.`);
 
       return {
         success: true,
-        message: `Successfully synchronized ${result.added} games.`
+        message: `Successfully synchronized games. Added: ${result.added}, Updated: ${result.updated}.`
       };
     } catch (error) {
       logger.error('Error synchronizing games:', error);
