@@ -118,8 +118,12 @@ export class GameRepository {
       whereClause.type = filters.type;
     }
 
-    // si piden un providerId puntual, debe estar dentro de los permitidos del consumer
-    if (filters.providerId && providerIds.includes(filters.providerId)) {
+    // si piden un providerId puntual, debe estar dentro de los permitidos del consumer.
+    // si no lo está, devolvemos vacío en vez de ignorar el filtro (evita mezclar providers).
+    if (filters.providerId) {
+      if (!providerIds.includes(filters.providerId)) {
+        return { data: [], total: 0 };
+      }
       whereClause.providerId = filters.providerId;
     }
 

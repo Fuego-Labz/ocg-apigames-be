@@ -221,7 +221,10 @@
                 { "key": "consumer", "value": "777vault" },
                 { "key": "search", "value": "roulette", "disabled": true },
                 { "key": "type", "value": "LIVE", "disabled": true },
-                { "key": "providerId", "value": "1", "description": "BetSoft", "disabled": true },
+                { "key": "providerId", "value": "3", "description": "TomHorn", "disabled": true },
+                { "key": "providerId", "value": "4", "description": "PragmaticPlay", "disabled": true },
+                { "key": "providerId", "value": "12", "description": "Yggdrasil", "disabled": true },
+                { "key": "providerId", "value": "30", "description": "Ruby Play", "disabled": true },
                 { "key": "isLive", "value": "true", "disabled": true }
               ]
             }
