@@ -23,6 +23,7 @@ function mapLiveGameToGameShape(game: LuckyStreakGame): Game {
     rtp: game.rtp ?? null,
     isLive: true,
     isActive: true,
+    hasBuyFeature: false,
     priority: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -93,8 +94,11 @@ export class GameService {
    */
   private filterLiveGames(
     games: Game[],
-    filters: { search?: string; providerId?: string; type?: string }
+    filters: { search?: string; providerId?: string; type?: string; hasBuyFeature?: boolean }
   ): Game[] {
+    // los juegos live nunca tienen Buy Feature: si piden hasBuyFeature=true, no hay nada que devolver.
+    if (filters.hasBuyFeature === true) return [];
+
     let filtered = games;
 
     if (filters.search) {
@@ -122,7 +126,7 @@ export class GameService {
   public async getGames(
     page: number = 1,
     limit: number = 20,
-    filters: { search?: string; type?: string; providerId?: string; isLive?: boolean },
+    filters: { search?: string; type?: string; providerId?: string; isLive?: boolean; hasBuyFeature?: boolean },
     consumer?: string
   ) {
     const providerIds = resolveProviderIds(consumer);

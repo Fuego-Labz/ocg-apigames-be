@@ -25,6 +25,7 @@ model Game {
   rtp        Float?
   isLive     Boolean  @default(false)
   isActive   Boolean  @default(true)
+  hasBuyFeature Boolean @default(false)
   priority   Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -32,4 +33,5 @@ model Game {
   @@index([providerId])
   @@index([type])
   @@index([priority])
+  @@index([hasBuyFeature])
 }

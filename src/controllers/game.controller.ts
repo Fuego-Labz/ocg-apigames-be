@@ -9,6 +9,7 @@ const getGamesSchema = z.object({
   type: z.string().optional(),
   providerId: z.string().optional(),
   isLive: z.enum(['true', 'false']).transform(val => val === 'true').optional(),
+  hasBuyFeature: z.enum(['true', 'false']).transform(val => val === 'true').optional(),
   consumer: z.string().optional(),
 });
 
@@ -31,7 +32,8 @@ export class GameController {
         search: query.search,
         type: query.type,
         providerId: query.providerId,
-        isLive: query.isLive
+        isLive: query.isLive,
+        hasBuyFeature: query.hasBuyFeature
       };
 
       const result = await gameService.getGames(query.page, query.limit, filters, query.consumer);

@@ -95,6 +95,21 @@ Por defecto, los juegos se ordenan alfabéticamente para garantizar una mezcla v
 Los juegos modificados adoptarán sus nuevas posiciones instantáneamente en el frontend. El resto de juegos con prioridad `0` seguirán ordenándose alfabéticamente.
 
 ---
+
+## Marcar juegos con Buy Feature / Bonus Buy
+
+La API del proveedor no informa qué juegos tienen Buy Feature, por lo que este atributo se administra manualmente mediante el campo `hasBuyFeature` en la tabla `Game`.
+
+1. Ejecutar `npx prisma studio` en la raíz del proyecto.
+2. Abrir el modelo **Game** y buscar el juego deseado.
+3. Cambiar el valor de la columna `hasBuyFeature` de `false` a `true`.
+4. Guardar los cambios.
+
+El sync automático (`POST /sync`) **nunca sobrescribe** este campo: solo se inicializa en `false` al crear un juego nuevo y queda tal cual quedó marcado manualmente en los updates siguientes.
+
+Para consumir desde el frontend: `GET /api/games?hasBuyFeature=true` (combinable con `type`, `providerId`, `search`, etc.).
+
+---
 ## Endpoints
 
 Base URL: `http://localhost:3000`
@@ -131,6 +146,7 @@ GET /api/games
 | `type` | string | No | Filtrar por categoría (ej: `SLOTS`, `ROULETTE`, `LIVE`) |
 | `providerId` | string | No | Filtrar por ID del proveedor |
 | `isLive` | boolean | No | Filtrar juegos en vivo (`true` / `false`) |
+| `hasBuyFeature` | boolean | No | Filtrar juegos con Buy Feature / Bonus Buy (`true` / `false`) |
 
 **Ejemplo:**
 ```

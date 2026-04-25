@@ -61,7 +61,25 @@
             { "key": "providerId", "value": "7", "description": "Fugaso", "disabled": true },
             { "key": "providerId", "value": "58", "description": "TurboGames", "disabled": true },
             { "key": "providerId", "value": "64", "description": "PGSoft", "disabled": true },
-            { "key": "isLive", "value": "true", "disabled": true }
+            { "key": "isLive", "value": "true", "disabled": true },
+            { "key": "hasBuyFeature", "value": "true", "description": "Buy Feature / Bonus Buy", "disabled": true }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Games with Buy Feature",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/games?page=1&limit=20&hasBuyFeature=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" },
+            { "key": "hasBuyFeature", "value": "true", "description": "true = solo juegos con Buy Feature / Bonus Buy; false = solo los que NO tienen" }
           ]
         }
       }
@@ -225,7 +243,8 @@
                 { "key": "providerId", "value": "4", "description": "PragmaticPlay", "disabled": true },
                 { "key": "providerId", "value": "12", "description": "Yggdrasil", "disabled": true },
                 { "key": "providerId", "value": "30", "description": "Ruby Play", "disabled": true },
-                { "key": "isLive", "value": "true", "disabled": true }
+                { "key": "isLive", "value": "true", "disabled": true },
+                { "key": "hasBuyFeature", "value": "true", "description": "Buy Feature / Bonus Buy", "disabled": true }
               ]
             }
           }

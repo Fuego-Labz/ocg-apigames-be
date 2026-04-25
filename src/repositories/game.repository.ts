@@ -25,6 +25,7 @@ export type GameInput = {
   thumbnail: string | null;
   rtp: number | null;
   isLive: boolean;
+  hasBuyFeature?: boolean;
 };
 
 export class GameRepository {
@@ -69,10 +70,12 @@ export class GameRepository {
             isLive: Boolean(game.isLive),
             isActive: true
           };
+          // hasBuyFeature se administra manualmente (Prisma Studio);
+          // solo se setea en create (default false) y NUNCA se sobrescribe en update.
           return prisma.game.upsert({
             where: { id: payload.id },
             update: payload,
-            create: payload,
+            create: { ...payload, hasBuyFeature: game.hasBuyFeature ?? false },
           });
         })
       );
@@ -100,7 +103,7 @@ export class GameRepository {
    */
   public async getGames(
     providerIds: string[],
-    filters: { search?: string; type?: string; providerId?: string; isLive?: boolean },
+    filters: { search?: string; type?: string; providerId?: string; isLive?: boolean; hasBuyFeature?: boolean },
     skip: number,
     take: number
   ): Promise<{ data: Game[], total: number }> {
@@ -129,6 +132,9 @@ export class GameRepository {
 
     // si isLive se pasa explícitamente, sobreescribe (útil si envían type=ROULETTE y isLive=true)
     if (filters.isLive !== undefined) whereClause.isLive = filters.isLive;
+
+    // filtro por Buy Feature / Bonus Buy (marcado manualmente en DB)
+    if (filters.hasBuyFeature !== undefined) whereClause.hasBuyFeature = filters.hasBuyFeature;
 
     const [data, total] = await Promise.all([
       prisma.game.findMany({
